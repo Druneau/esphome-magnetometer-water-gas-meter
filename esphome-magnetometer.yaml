@@ -249,9 +249,9 @@ sensor:
     name: ${prefix_name}Magnetic Field Magnitude
     internal: ${hide_magnetic_field_strength_sensors}
     lambda: |-
-      float x = id(${prefix_id}qmc5883l_axis_x);
-      float y = id(${prefix_id}qmc5883l_axis_y);
-      float z = id(${prefix_id}qmc5883l_axis_z);
+      float x = id(${prefix_id}qmc5883l_axis_x).state;
+      float y = id(${prefix_id}qmc5883l_axis_y).state;
+      float z = id(${prefix_id}qmc5883l_axis_z).state;
       float magnitude = sqrt(x * x + y * y + z * z);  // Calculate magnitude
       
             // Update min/max values during calibration
