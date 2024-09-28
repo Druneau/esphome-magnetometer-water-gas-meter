@@ -212,7 +212,7 @@ sensor:
     field_strength_x:
       id: ${prefix_id}qmc5883l_axis_x
       name: ${prefix_name}Magnetic Field Strength X
-    internal: ${hide_magnetic_field_strength_sensors}
+      internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
       on_raw_value:
         then:
