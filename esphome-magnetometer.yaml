@@ -217,7 +217,9 @@ sensor:
       on_raw_value:
         then:
           - component.update: ${prefix_id}qmc5883l_magnitude
-    field_strength_y:
+      filters:
+        - delta: 3
+     field_strength_y:
       id: ${prefix_id}qmc5883l_axis_y
       name: ${prefix_name}Magnetic Field Strength Y
       internal: ${hide_magnetic_field_strength_sensors}
@@ -225,7 +227,9 @@ sensor:
       on_raw_value:
         then:
           - component.update: ${prefix_id}qmc5883l_magnitude
-    field_strength_z:
+      filters:
+        - delta: 3
+     field_strength_z:
       id: ${prefix_id}qmc5883l_axis_z
       name: ${prefix_name}Magnetic Field Strength Z
       internal: ${hide_magnetic_field_strength_sensors}
@@ -233,7 +237,9 @@ sensor:
       on_raw_value:
         then:
           - component.update: ${prefix_id}qmc5883l_magnitude
-    oversampling: ${qmc5883l_oversampling}
+      filters:
+        - delta: 3
+     oversampling: ${qmc5883l_oversampling}
     update_interval: ${qmc5883l_update_interval}
 
 
