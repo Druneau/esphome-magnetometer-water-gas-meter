@@ -247,7 +247,7 @@ sensor:
   - platform: template
     id: ${prefix_id}qmc5883l_magnitude
     name: ${prefix_name}Magnetic Field Magnitude
-    interna: ${hide_magnetic_field_strength_sensors}
+    internal: ${hide_magnetic_field_strength_sensors}
     lambda: |-
       float x = id(${prefix_id}field_strength_x_value);
       float y = id(${prefix_id}field_strength_y_value);
