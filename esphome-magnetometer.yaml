@@ -71,22 +71,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: ${prefix_id}calibrating_axis_x_min
+  - id: ${prefix_id}calibrating_magnitude_min
     type: float
     restore_value: no
-  - id: ${prefix_id}calibrating_axis_x_max
-    type: float
-    restore_value: no
-  - id: ${prefix_id}calibrating_axis_y_min
-    type: float
-    restore_value: no
-  - id: ${prefix_id}calibrating_axis_y_max
-    type: float
-    restore_value: no
-  - id: ${prefix_id}calibrating_axis_z_min
-    type: float
-    restore_value: no
-  - id: ${prefix_id}calibrating_axis_z_max
+  - id: ${prefix_id}calibrating_magnitude_max
     type: float
     restore_value: no
 
@@ -104,21 +92,6 @@ number:
     restore_value: true
     optimistic: true
     unit_of_measurement: ${volume_unit}
-
-  - platform: template
-    id: ${prefix_id}temperature_offset
-    name: ${prefix_name}Temperature Offset
-    unit_of_measurement: '°C'
-    min_value: -100
-    max_value: 100
-    step: 0.1
-    mode: box
-    update_interval: never
-    optimistic: true
-    restore_value: true
-    initial_value: 33
-    icon: 'mdi:thermometer'
-    entity_category: config
 
   - platform: template
     id: ${prefix_id}threshold_lower
@@ -163,85 +136,45 @@ number:
     optimistic: true
     unit_of_measurement: s
 
-select:
-  - platform: template
-    id: ${prefix_id}axis
-    name: ${prefix_name}Axis
-    entity_category: config
-    options:
-      - x
-      - y
-      - z
-      - None
-    initial_option: None
-    update_interval: never
-    restore_value: true
-    optimistic: true
-
 button:
   - platform: template
     id: ${prefix_id}calibrate_button
-    name: ${prefix_name}Calibrate axis
+    name: ${prefix_name}Calibrate magnitude
     entity_category: config
     on_press:
       - lambda: |-
           ESP_LOGI("calibration", "Starting calibration. Make sure ${device_class} is running");
-          id(${prefix_id}calibrating_axis_x_min) = std::numeric_limits<float>::max();
-          id(${prefix_id}calibrating_axis_x_max) = std::numeric_limits<float>::lowest();
-          id(${prefix_id}calibrating_axis_y_min) = std::numeric_limits<float>::max();
-          id(${prefix_id}calibrating_axis_y_max) = std::numeric_limits<float>::lowest();
-          id(${prefix_id}calibrating_axis_z_min) = std::numeric_limits<float>::max();
-          id(${prefix_id}calibrating_axis_z_max) = std::numeric_limits<float>::lowest();
+          id(${prefix_id}calibrating_magnitude_min) = std::numeric_limits<float>::max();
+          id(${prefix_id}calibrating_magnitude_max) = std::numeric_limits<float>::lowest();
           id(${prefix_id}calibrating) = true;
       - delay: !lambda return id(${prefix_id}calibration_seconds).state * 1000;
       - lambda: |-
           id(${prefix_id}calibrating) = false;
-          float x_range = id(${prefix_id}calibrating_axis_x_max) - id(${prefix_id}calibrating_axis_x_min);
-          float y_range = id(${prefix_id}calibrating_axis_y_max) - id(${prefix_id}calibrating_axis_y_min);
-          float z_range = id(${prefix_id}calibrating_axis_z_max) - id(${prefix_id}calibrating_axis_z_min);
-          if (x_range < 0) {
-            ESP_LOGW("${prefix_id}calibration", "Didn't get any values for x");
-          } else {
-            ESP_LOGI("${prefix_id}calibration", "x ranged from %.2f to %.2f",
-                     id(${prefix_id}calibrating_axis_x_min), id(${prefix_id}calibrating_axis_x_max));
-          }
-          if (y_range < 0) {
-            ESP_LOGW("${prefix_id}calibration", "Didn't get any values for y");
-          } else {
-            ESP_LOGI("${prefix_id}calibration", "y ranged from %.2f to %.2f",
-                     id(${prefix_id}calibrating_axis_y_min), id(${prefix_id}calibrating_axis_y_max));
-          }
-          if (z_range < 0) {
-            ESP_LOGW("${prefix_id}calibration", "Didn't get any values for z");
-          } else {
-            ESP_LOGI("${prefix_id}calibration", "z ranged from %.2f to %.2f",
-                     id(${prefix_id}calibrating_axis_z_min), id(${prefix_id}calibrating_axis_z_max));
-          }
-          std::string axis_with_largest_range;
-          float min, max;
-          if (x_range > 20 && x_range > y_range && x_range > z_range) {
-            axis_with_largest_range = "x";
-            min = id(${prefix_id}calibrating_axis_x_min);
-            max = id(${prefix_id}calibrating_axis_x_max);
-          } else if (y_range > 20 && y_range > x_range && y_range > z_range) {
-            axis_with_largest_range = "y";
-            min = id(${prefix_id}calibrating_axis_y_min);
-            max = id(${prefix_id}calibrating_axis_y_max);
-          } else if (z_range > 20 && z_range > x_range && z_range > y_range) {
-            axis_with_largest_range = "z";
-            min = id(${prefix_id}calibrating_axis_z_min);
-            max = id(${prefix_id}calibrating_axis_z_max);
-          } else {
-            ESP_LOGE("${prefix_id}calibration", "Calibration failed. No axis had a range of at least 20");
+          // Calculate magnitude from the max and min values of x, y, and z during calibration
+          float min_magnitude = id(${prefix_id}calibrating_magnitude_min);
+          float max_magnitude = id(${prefix_id}calibrating_magnitude_max);
+          float magnitude_range = max_magnitude - min_magnitude;
+
+          if (magnitude_range < 0) {
+            ESP_LOGE("${prefix_id}calibration", "No valid magnitude values during calibration");
             return;
           }
-          float lower_threshold = min + (max - min) / 2 - 5;
-          float upper_threshold = min + (max - min) / 2 + 5;
-          ESP_LOGI("${prefix_id}calibration", "Selected %s axis with lower threshold: %.2f and upper threshold: %.2f",
-                   axis_with_largest_range.c_str(), lower_threshold, upper_threshold);
-          id(${prefix_id}axis).make_call().set_option(axis_with_largest_range).perform();
-          id(${prefix_id}threshold_lower).make_call().set_value(roundf(lower_threshold * 10) / 10).perform();
-          id(${prefix_id}threshold_upper).make_call().set_value(roundf(upper_threshold * 10) / 10).perform();
+
+          ESP_LOGI("${prefix_id}calibration", "Magnitude ranged from %.2f to %.2f", min_magnitude, max_magnitude);
+
+          if (magnitude_range > 20) {
+            float lower_threshold = min_magnitude + (magnitude_range / 2) - 5;
+            float upper_threshold = min_magnitude + (magnitude_range / 2) + 5;
+
+            ESP_LOGI("${prefix_id}calibration", "Setting lower threshold: %.2f and upper threshold: %.2f",
+                     lower_threshold, upper_threshold);
+
+            id(${prefix_id}threshold_lower).make_call().set_value(roundf(lower_threshold * 10) / 10).perform();
+            id(${prefix_id}threshold_upper).make_call().set_value(roundf(upper_threshold * 10) / 10).perform();
+          } else {
+            ESP_LOGE("${prefix_id}calibration", "Calibration failed. Magnitude range was less than 20");
+          }
+
 
 i2c:
   - id: ${prefix_id}i2c_bus
@@ -279,16 +212,11 @@ sensor:
     field_strength_x:
       id: ${prefix_id}qmc5883l_axis_x
       name: ${prefix_name}Magnetic Field Strength X
-      internal: ${hide_magnetic_field_strength_sensors}
+    internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
       on_raw_value:
         then:
-          - lambda:
-              if (id(${prefix_id}axis).state == "x") id(${prefix_id}axis_value).publish_state(x);
-              if (id(${prefix_id}calibrating)) {
-                id(${prefix_id}calibrating_axis_x_min) = min(id(${prefix_id}calibrating_axis_x_min), x);
-                id(${prefix_id}calibrating_axis_x_max) = max(id(${prefix_id}calibrating_axis_x_max), x);
-              }
+          - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
     field_strength_y:
@@ -298,12 +226,7 @@ sensor:
       entity_category: diagnostic
       on_raw_value:
         then:
-          - lambda: |-
-              if (id(${prefix_id}axis).state == "y") id(${prefix_id}axis_value).publish_state(x);
-              if (id(${prefix_id}calibrating)) {
-                id(${prefix_id}calibrating_axis_y_min) = min(id(${prefix_id}calibrating_axis_y_min), x);
-                id(${prefix_id}calibrating_axis_y_max) = max(id(${prefix_id}calibrating_axis_y_max), x);
-              }
+          - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
     field_strength_z:
@@ -313,27 +236,32 @@ sensor:
       entity_category: diagnostic
       on_raw_value:
         then:
-          - lambda:
-              if (id(${prefix_id}axis).state == "z") id(${prefix_id}axis_value).publish_state(x);
-              if (id(${prefix_id}calibrating)) {
-                id(${prefix_id}calibrating_axis_z_min) = min(id(${prefix_id}calibrating_axis_z_min), x);
-                id(${prefix_id}calibrating_axis_z_max) = max(id(${prefix_id}calibrating_axis_z_max), x);
-              }
+          - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
-    temperature:
-      id: ${prefix_id}qmc5883l_temperature
-      name: ${prefix_name}Temperature
-      filters:
-        - lambda: "return x + id(${prefix_id}temperature_offset).state;"
-        - sliding_window_moving_average:
-            window_size: 3000
-            send_every: 3000
-        - or:
-            - throttle: 300s
-            - delta: 0.5
     oversampling: ${qmc5883l_oversampling}
     update_interval: ${qmc5883l_update_interval}
+
+
+  # Virtual sensor to calculate magnitude from X, Y, and Z values
+  - platform: template
+    id: ${prefix_id}qmc5883l_magnitude
+    name: ${prefix_name}Magnetic Field Magnitude
+    interna: ${hide_magnetic_field_strength_sensors}
+    lambda: |-
+      float x = id(${prefix_id}field_strength_x_value);
+      float y = id(${prefix_id}field_strength_y_value);
+      float z = id(${prefix_id}field_strength_z_value);
+      float magnitude = sqrt(x * x + y * y + z * z);  // Calculate magnitude
+      
+            // Update min/max values during calibration
+      if (id(calibrating)) {
+        id(calibrating_magnitude_min) = min(id(calibrating_magnitude_min), magnitude);
+        id(calibrating_magnitude_max) = max(id(calibrating_magnitude_max), magnitude);
+      }
+
+      return magnitude;
+    update_interval: never  # Update manually via component.update in X/Y/Z sensors
 
   - platform: template
     id: ${prefix_id}sensor_half_rotations_total
