@@ -302,19 +302,21 @@ sensor:
 
       // Get the current count of half rotations
       float current_half_rotations = id(${prefix_id}half_rotations_flow);
+
+      // Convert elapsed time to seconds for flow calculation
+      float elapsed_time_seconds = (current_time - last_update_time) / 1000.0;  
       
       // Calculate flow based on half rotations and elapsed time
       if (current_half_rotations > 0) {
-        // Convert elapsed time to seconds for flow calculation
-        float elapsed_time_seconds = (current_time - last_update_time) / 1000.0;  
-        
+       
         // Calculate flow
         flow = (current_half_rotations * id(${prefix_id}volume_per_half_rotation).state) / elapsed_time_seconds; 
         id(${prefix_id}half_rotations_flow) = 0;  // Reset half rotations count
         last_update_time = current_time;  // Update last calculation time
       } else {
         // If no half rotations have occurred since the last update
-        flow = 0;  // Set flow to 0 if no rotations have occurred
+        if (elapsed_time_seconds > 2.0)
+          flow = 0;  // Set flow to 0 if no rotations have occurred
       }
 
       return flow;  // Return the calculated flow
