@@ -310,7 +310,7 @@ sensor:
       if (current_half_rotations > 0) {
        
         // Calculate flow
-        flow = (current_half_rotations * id(${prefix_id}volume_per_half_rotation).state) / elapsed_time_seconds; 
+        flow = 60 * (current_half_rotations * id(${prefix_id}volume_per_half_rotation).state) / elapsed_time_seconds; 
         id(${prefix_id}half_rotations_flow) = 0;  // Reset half rotations count
         last_update_time = current_time;  // Update last calculation time
       } else {
@@ -324,3 +324,8 @@ sensor:
     accuracy_decimals: 2
     state_class: measurement
     unit_of_measurement: ${volume_unit}/min
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
