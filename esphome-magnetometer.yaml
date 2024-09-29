@@ -330,5 +330,3 @@ sensor:
     accuracy_decimals: 2
     state_class: measurement
     unit_of_measurement: ${volume_unit}/min
-    filters:
-      - delta: 0.01
