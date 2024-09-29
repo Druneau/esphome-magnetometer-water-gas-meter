@@ -195,8 +195,7 @@ sensor:
               id(${prefix_id}axis_value_high) = true;
               id(${prefix_id}half_rotations_total) += 1;
               id(${prefix_id}half_rotations_flow) += 1;
-              // Call the update function for the sensor_flow
-              id(${prefix_id}sensor_flow).publish_state(id(${prefix_id}sensor_flow).state); // Trigger a state updat
+              id(${prefix_id}sensor_flow).update();
               id(led).turn_on();
             } else if (x < id(${prefix_id}threshold_lower).state && id(${prefix_id}axis_value_high)) {
               id(${prefix_id}axis_value_high) = false;
