@@ -195,12 +195,12 @@ sensor:
               id(${prefix_id}axis_value_high) = true;
               id(${prefix_id}half_rotations_total) += 1;
               id(${prefix_id}half_rotations_flow) += 1;
+              component.update(id(${prefix_id}sensor_flow));
               id(led).turn_on();
             } else if (x < id(${prefix_id}threshold_lower).state && id(${prefix_id}axis_value_high)) {
               id(${prefix_id}axis_value_high) = false;
               id(led).turn_off();
             }
-        - component.update: ${prefix_id}sensor_flow
     update_interval: never
 
   # https://esphome.io/components/sensor/qmc5883l.html
