@@ -201,8 +201,6 @@ sensor:
               id(led).turn_off();
             }
         - component.update: ${prefix_id}sensor_flow
-    filters:
-      - delta: 3
 
   # https://esphome.io/components/sensor/qmc5883l.html
   - platform: qmc5883l
