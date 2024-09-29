@@ -201,6 +201,7 @@ sensor:
               id(led).turn_off();
             }
         - component.update: ${prefix_id}sensor_flow
+    update_interval: never
 
   # https://esphome.io/components/sensor/qmc5883l.html
   - platform: qmc5883l
@@ -217,27 +218,22 @@ sensor:
           - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
-     field_strength_y:
+    field_strength_y:
       id: ${prefix_id}qmc5883l_axis_y
       name: ${prefix_name}Magnetic Field Strength Y
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
       on_raw_value:
-        then:
-          - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
-     field_strength_z:
+    field_strength_z:
       id: ${prefix_id}qmc5883l_axis_z
       name: ${prefix_name}Magnetic Field Strength Z
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
-      on_raw_value:
-        then:
-          - component.update: ${prefix_id}qmc5883l_magnitude
       filters:
         - delta: 3
-     oversampling: ${qmc5883l_oversampling}
+    oversampling: ${qmc5883l_oversampling}
     update_interval: ${qmc5883l_update_interval}
 
 
@@ -300,9 +296,6 @@ sensor:
 
       unsigned long current_time = millis();  // Current time in milliseconds
       
-      // Calculate elapsed time since the last update
-      float elapsed_time = (current_time - last_update_time);  // Time since last update in milliseconds
-
       // If this is the first update, initialize last_update_time
       if (last_update_time == 0) {
         last_update_time = current_time;  // Initialize last update time
@@ -314,7 +307,7 @@ sensor:
       // Calculate flow based on half rotations and elapsed time
       if (current_half_rotations > 0) {
         // Convert elapsed time to seconds for flow calculation
-        float elapsed_time_seconds = elapsed_time / 1000.0;  
+        float elapsed_time_seconds = (current_time - last_update_time) / 1000.0;  
         
         // Calculate flow
         flow = (current_half_rotations * id(${prefix_id}volume_per_half_rotation).state) / elapsed_time_seconds; 
