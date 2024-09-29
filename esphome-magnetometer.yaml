@@ -315,7 +315,7 @@ sensor:
         last_update_time = current_time;  // Update last calculation time
       } else {
         // If no half rotations have occurred since the last update
-        if (elapsed_time_seconds > 2.0)
+        if (elapsed_time_seconds > 5.0)
           flow = 0;  // Set flow to 0 if no rotations have occurred
       }
 
@@ -326,6 +326,6 @@ sensor:
     unit_of_measurement: ${volume_unit}/min
     filters:
       - sliding_window_moving_average:
-          window_size: 3
-          send_every: 1
-          send_first_at: 1
+          window_size: 10
+          send_every: 2
+          send_first_at: 2
