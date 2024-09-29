@@ -200,7 +200,7 @@ sensor:
             } else if (x < id(${prefix_id}threshold_lower).state && id(${prefix_id}axis_value_high)) {
               id(${prefix_id}axis_value_high) = false;
               id(led).turn_off();
-            }
+            } else id(${prefix_id}sensor_flow).update();
     update_interval: never
 
   # https://esphome.io/components/sensor/qmc5883l.html
