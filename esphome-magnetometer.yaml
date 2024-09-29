@@ -23,7 +23,6 @@ substitutions:
   qmc5883l_oversampling: '64x'
 
   volume_per_half_rotation_initial_value: '0.01008156'
-  flow_update_interval_seconds: '10'
 
   hide_magnetic_field_strength_sensors: 'true'
   hide_half_rotations_total_sensor: 'true'
@@ -201,6 +200,7 @@ sensor:
               id(${prefix_id}axis_value_high) = false;
               id(led).turn_off();
             }
+        - component.update: ${prefix_id}sensor_flow
     filters:
       - delta: 3
 
@@ -297,14 +297,40 @@ sensor:
     id: ${prefix_id}sensor_flow
     name: ${prefix_name}Flow
     lambda: |-
-      float flow = id(${prefix_id}half_rotations_flow) * id(${prefix_id}volume_per_half_rotation).state * 60.0 / ${flow_update_interval_seconds};
-      id(${prefix_id}half_rotations_flow) = 0;
-      return flow;
-    update_interval: ${flow_update_interval_seconds}s
+      static unsigned long last_update_time = 0;  // Time of last flow calculation in milliseconds
+      static float flow = 0;  // Flow variable
+
+      unsigned long current_time = millis();  // Current time in milliseconds
+      
+      // Calculate elapsed time since the last update
+      float elapsed_time = (current_time - last_update_time);  // Time since last update in milliseconds
+
+      // If this is the first update, initialize last_update_time
+      if (last_update_time == 0) {
+        last_update_time = current_time;  // Initialize last update time
+      }
+
+      // Get the current count of half rotations
+      float current_half_rotations = id(${prefix_id}half_rotations_flow);
+      
+      // Calculate flow based on half rotations and elapsed time
+      if (current_half_rotations > 0) {
+        // Convert elapsed time to seconds for flow calculation
+        float elapsed_time_seconds = elapsed_time / 1000.0;  
+        
+        // Calculate flow
+        flow = (current_half_rotations * id(${prefix_id}volume_per_half_rotation).state) / elapsed_time_seconds; 
+        id(${prefix_id}half_rotations_flow) = 0;  // Reset half rotations count
+        last_update_time = current_time;  // Update last calculation time
+      } else {
+        // If no half rotations have occurred since the last update
+        flow = 0;  // Set flow to 0 if no rotations have occurred
+      }
+
+      return flow;  // Return the calculated flow
+    update_interval: never
     accuracy_decimals: 2
     state_class: measurement
     unit_of_measurement: ${volume_unit}/min
     filters:
-      - or:
-          - throttle: 60s
-          - delta: 0.01
+      - delta: 0.01
