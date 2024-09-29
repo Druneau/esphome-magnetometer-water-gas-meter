@@ -223,7 +223,6 @@ sensor:
       name: ${prefix_name}Magnetic Field Strength Y
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
-      on_raw_value:
       filters:
         - delta: 3
     field_strength_z:
