@@ -216,22 +216,16 @@ sensor:
       on_raw_value:
         then:
           - component.update: ${prefix_id}qmc5883l_magnitude
-      filters:
-        - delta: 3
     field_strength_y:
       id: ${prefix_id}qmc5883l_axis_y
       name: ${prefix_name}Magnetic Field Strength Y
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
-      filters:
-        - delta: 3
     field_strength_z:
       id: ${prefix_id}qmc5883l_axis_z
       name: ${prefix_name}Magnetic Field Strength Z
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
-      filters:
-        - delta: 3
     oversampling: ${qmc5883l_oversampling}
     update_interval: ${qmc5883l_update_interval}
 
@@ -247,19 +241,20 @@ sensor:
       float z = id(${prefix_id}qmc5883l_axis_z).state;
       float magnitude = sqrt(x * x + y * y + z * z);  // Calculate magnitude
 
-      // Log the magnitude and current timestamp in milliseconds
-      ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
+      // Implement delta filter manually
+      if (abs(magnitude - id(${prefix_id}qmc5883l_magnitude).state) >= 3) {
+        // Log the magnitude and current timestamp in milliseconds
+        ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
 
-      id(${prefix_id}axis_value).publish_state(magnitude); 
-            // Update min/max values during calibration
+        id(${prefix_id}axis_value).publish_state(magnitude);
+      }
+
+      // Update min/max values during calibration
       if (id(calibrating)) {
         id(calibrating_magnitude_min) = min(id(calibrating_magnitude_min), magnitude);
         id(calibrating_magnitude_max) = max(id(calibrating_magnitude_max), magnitude);
       }
       return magnitude;
-
-    filters:
-      - delta: 3
     update_interval: never  # Update manually via component.update in X/Y/Z sensors
 
   - platform: template
