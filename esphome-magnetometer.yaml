@@ -241,8 +241,10 @@ sensor:
       float z = id(${prefix_id}qmc5883l_axis_z).state;
       float magnitude = sqrt(x * x + y * y + z * z);  // Calculate magnitude
 
-      // Implement delta filter manually
-      if (abs(magnitude - id(${prefix_id}qmc5883l_magnitude).state) >= 3) {
+      float previous_magnitude = id(${prefix_id}qmc5883l_magnitude).state;
+
+      // Check if the previous value is NaN (Not a Number) or if the delta is greater than 3
+      if (isnan(previous_magnitude) || abs(magnitude - previous_magnitude) >= 3) {
         // Log the magnitude and current timestamp in milliseconds
         ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
 
