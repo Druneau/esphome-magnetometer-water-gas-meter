@@ -39,7 +39,7 @@ esphome:
 logger:
   level: INFO
   logs:
-    qmc5883l: INFO
+    qmc5883l: DEBUG
 
 api:
   services:
@@ -246,7 +246,7 @@ sensor:
       // Check if the previous value is NaN (Not a Number) or if the delta is greater than 3
       if (isnan(previous_magnitude) || abs(magnitude - previous_magnitude) >= 3) {
         // Log the magnitude and current timestamp in milliseconds
-        ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
+        ESP_LOGI("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
 
         id(${prefix_id}axis_value).publish_state(magnitude);
       }
