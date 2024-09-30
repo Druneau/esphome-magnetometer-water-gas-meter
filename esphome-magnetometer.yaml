@@ -246,6 +246,10 @@ sensor:
       float y = id(${prefix_id}qmc5883l_axis_y).state;
       float z = id(${prefix_id}qmc5883l_axis_z).state;
       float magnitude = sqrt(x * x + y * y + z * z);  // Calculate magnitude
+
+      // Log the magnitude and current timestamp in milliseconds
+      ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
+
       id(${prefix_id}axis_value).publish_state(magnitude); 
             // Update min/max values during calibration
       if (id(calibrating)) {
