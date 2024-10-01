@@ -37,9 +37,9 @@ esphome:
       - lambda: App.set_loop_interval(0);
 
 logger:
-  level: INFO
+  level: DEBUG
   logs:
-    qmc5883l: DEBUG
+    qmc5883l: INFO
 
 api:
   services:
@@ -216,16 +216,22 @@ sensor:
       on_raw_value:
         then:
           - component.update: ${prefix_id}qmc5883l_magnitude
+      filters: 
+        - delta: 3
     field_strength_y:
       id: ${prefix_id}qmc5883l_axis_y
       name: ${prefix_name}Magnetic Field Strength Y
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
+      filters:
+        - delta: 3
     field_strength_z:
       id: ${prefix_id}qmc5883l_axis_z
       name: ${prefix_name}Magnetic Field Strength Z
       internal: ${hide_magnetic_field_strength_sensors}
       entity_category: diagnostic
+      filters:
+        - delta: 3
     oversampling: ${qmc5883l_oversampling}
     update_interval: ${qmc5883l_update_interval}
 
@@ -246,7 +252,7 @@ sensor:
       // Check if the previous value is NaN (Not a Number) or if the delta is greater than 3
       if (isnan(previous_magnitude) || abs(magnitude - previous_magnitude) >= 3) {
         // Log the magnitude and current timestamp in milliseconds
-        ESP_LOGI("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
+        ESP_LOGD("magnetometer", "Timestamp: %u ms, Magnitude: %.2f", millis(), magnitude);
 
         id(${prefix_id}axis_value).publish_state(magnitude);
       }
