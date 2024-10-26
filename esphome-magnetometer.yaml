@@ -24,6 +24,7 @@ substitutions:
 
   volume_per_half_rotation_initial_value: '0.01008156'
   flow_update_interval_seconds: '10'
+  total_update_interval_seconds: '10'
 
   hide_magnetic_field_strength_sensors: 'true'
   hide_half_rotations_total_sensor: 'true'
@@ -352,7 +353,7 @@ sensor:
     id: ${prefix_id}sensor_total
     name: ${prefix_name}Total
     lambda: return id(${prefix_id}half_rotations_total) * id(${prefix_id}volume_per_half_rotation).state;
-    update_interval: 10s
+    update_interval: ${total_update_interval_seconds}s
     accuracy_decimals: 2
     device_class: ${device_class}
     icon: ${device_icon}
