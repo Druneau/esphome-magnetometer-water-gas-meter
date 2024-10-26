@@ -25,6 +25,7 @@ substitutions:
   volume_per_half_rotation_initial_value: '0.01008156'
   flow_update_interval_seconds: '10'
   total_update_interval_seconds: '10'
+  flow_timeout_ms: '30000'
 
   hide_magnetic_field_strength_sensors: 'true'
   hide_half_rotations_total_sensor: 'true'
@@ -90,6 +91,14 @@ globals:
   - id: ${prefix_id}calibrating_axis_z_max
     type: float
     restore_value: no
+  - id: ${prefix_id}last_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+  - id: ${prefix_id}dynamic_flow
+    type: float
+    restore_value: no
+    initial_value: '0'
 
 number:
   - platform: template
@@ -260,10 +269,17 @@ sensor:
     on_raw_value:
       then:
         - lambda: |-
+            unsigned long current_time = millis();
             if (x > id(${prefix_id}threshold_upper).state && !id(${prefix_id}axis_value_high)) {
               id(${prefix_id}axis_value_high) = true;
               id(${prefix_id}half_rotations_total) += 1;
               id(${prefix_id}half_rotations_flow) += 1;
+              if (id(${prefix_id}last_rotation_time) > 0) {
+                unsigned long time_diff = current_time - id(${prefix_id}last_rotation_time);
+                id(${prefix_id}dynamic_flow) = (id(${prefix_id}volume_per_half_rotation).state * 60000.0) / time_diff;
+              }
+              id(${prefix_id}last_rotation_time) = current_time;
+              
               id(led).turn_on();
             } else if (x < id(${prefix_id}threshold_lower).state && id(${prefix_id}axis_value_high)) {
               id(${prefix_id}axis_value_high) = false;
@@ -368,9 +384,11 @@ sensor:
     id: ${prefix_id}sensor_flow
     name: ${prefix_name}Flow
     lambda: |-
-      float flow = id(${prefix_id}half_rotations_flow) * id(${prefix_id}volume_per_half_rotation).state * 60.0 / ${flow_update_interval_seconds};
-      id(${prefix_id}half_rotations_flow) = 0;
-      return flow;
+      unsigned long current_time = millis();
+      if (current_time - id(${prefix_id}last_rotation_time) > ${flow_timeout_ms}) {
+        id(${prefix_id}dynamic_flow) = 0.0;
+      }
+      return id(${prefix_id}dynamic_flow);
     update_interval: ${flow_update_interval_seconds}s
     accuracy_decimals: 2
     state_class: measurement
